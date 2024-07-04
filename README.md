@@ -18,6 +18,9 @@ memory.
 ### Fourth Step
 * Verify the design by generating tests at the tb
 
+### Fifth Step
+* Synthesize the design
+
 ## Toolchain:
 * System Verilog for simulation
 * Genus for synthesis
