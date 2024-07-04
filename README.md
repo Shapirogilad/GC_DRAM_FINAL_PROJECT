@@ -22,7 +22,7 @@ memory.
 * Synthesize the design
 
 ### Six Milestone
-* Writing an IEEE standerd article the concludes all the work that we have done and sumerizes the results
+* Writing an IEEE standerd article that concludes all the work that we have done and sumerizes the results
 
 ## Toolchain:
 * System Verilog for simulation
