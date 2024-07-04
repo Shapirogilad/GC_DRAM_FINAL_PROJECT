@@ -5,4 +5,4 @@ We started by designing a 128X64 memory array, and designed a controller to cont
 
 ## The controller's scheme
 
-![Controller and memory array](https://drive.google.com/file/d/1lgFNRbzn7FvQf72ddQycW67c-WcnP82U/view?usp=drive_link "Controller and memory array without considiring refresh")
+![Controller and memory array](https://drive.google.com/file/d/1lgFNRbzn7FvQf72ddQycW67c-WcnP82U/view "Controller and memory array without considiring refresh")
