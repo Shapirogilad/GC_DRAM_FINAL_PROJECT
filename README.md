@@ -13,7 +13,7 @@ memory.
 * Modify the controller to support a refresh method so we won't lose any data
 
 ### Third Milestone
-* Implement a refresh algorithm so the refresh will occur in a hidden way so it won't affect the user
+* Implement a refresh cyclic algorithm so the refresh will occur in a hidden way so it won't affect the user
 
 ### Fourth Milestone
 * Verify the design by generating tests at the tb
