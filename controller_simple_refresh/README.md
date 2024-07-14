@@ -5,4 +5,4 @@ We moved on and modified our controller accordingly to handle the limited DRT(da
 
 ## The controller's scheme
 
-![Controller and memory array](https://drive.google.com/file/d/1lgFNRbzn7FvQf72ddQycW67c-WcnP82U/view "Controller and memory array with simple refresh")
+![Controller and memory array](https://drive.google.com/uc?export=view&id=1Eqk2ZTf7NYIMtvBQjH_ocd_7vtJ_UnPr "Controller and memory array with simple refresh")
