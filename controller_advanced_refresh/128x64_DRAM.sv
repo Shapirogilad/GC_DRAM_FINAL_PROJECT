@@ -5,8 +5,6 @@ module DRAM_128_64 (
     input wire [63:0] in,
     input wire [6:0] raddr,
     input wire [6:0] waddr,
-    input wire wr_enable,
-    input wire rr_enable,
     output logic [63:0] rd
 );
     localparam CYCLES = 4999; //The DRT FAIL is 5000 cycles, because of the sequence of the code
@@ -20,7 +18,7 @@ module DRAM_128_64 (
     end
 
     always_ff @(posedge clk) begin 
-        if (re == we && !(wr_enable || rr_enable))
+        if (re == we && raddr == waddr)
             rd <= 64'bx;
         else if (re)
             rd <= mem[raddr];

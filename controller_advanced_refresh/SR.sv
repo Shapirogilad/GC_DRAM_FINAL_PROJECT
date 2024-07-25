@@ -1,9 +1,10 @@
+//reconsider the SR
 module SR (
     input wire rst,
     input wire clk,
-    input wire pause,
+    input wire pause,//check if needed
     input wire [6:0] user_addr,
-    output wire indicator,
+    output wire indicator,// check if there is a clock delay between the user_addr and indicator
     output reg [6:0] addr,
     output reg done
 );
