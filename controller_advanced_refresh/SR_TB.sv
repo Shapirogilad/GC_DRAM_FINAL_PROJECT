@@ -1,27 +1,31 @@
 module tb_SR;
     // Testbench signals
+    reg start;
     reg rst;
     reg clk;
-    reg pause;
-    reg [6:0] user_addr;
-    wire indicator;
-    wire [6:0] addr;
+    reg [6:0] addr_user;
+    reg user_write_enable;
+    wire indicator_user;
+    wire indicator_ref;
+    wire [6:0] addr_ref;
     wire done;
 
     // Instantiate the DUT (Device Under Test)
     SR dut (
+        .start(start),
         .rst(rst),
         .clk(clk),
-        .pause(pause),
-        .user_addr(user_addr),
-        .indicator(indicator),
-        .addr(addr),
+        .addr_user(addr_user),
+        .user_write_enable(user_write_enable),
+        .indicator_user(indicator_user),
+        .indicator_ref(indicator_ref),
+        .addr_ref(addr_ref),
         .done(done)
     );
 
     // Clock generation
     initial begin
-        clk = 0;
+        clk = 1;
         forever #5 clk = ~clk;
     end
 
@@ -29,46 +33,50 @@ module tb_SR;
     initial begin
         // Initialize signals
         rst = 0;
-        pause = 0;
-        user_addr = 0;
+        start = 0;
+        addr_user = 0;
+        user_write_enable = 0;
 
-        // Reset the module
+        // Apply reset
         $display("Applying reset...");
         rst = 1;
         #10;
         rst = 0;
+        start = 1;
+        #10;
+        start = 0;
+        #10
+
+        // Set some addresses in sr
+        $display("Setting sr[1] and sr[3]...");
+        user_write_enable = 1;
+        addr_user = 15;
+        #10;
+        user_write_enable = 0;
         #10;
 
-        // Test pause functionality
-        $display("Testing pause functionality...");
-        pause = 1;
-        user_addr = 7'd10;
-        #10;
-        pause = 0;
-        #10;
-
-        // Set some addresses
-        $display("Setting addresses 0, 2, and 4...");
-        pause = 0;
-        #10;
-        pause = 1;
-        user_addr = 7'd2;
-        #10;
-        pause = 1;
-        user_addr = 7'd4;
-        #10;
-        pause = 0;
-        #10;
-
-        // Check find_next_sr_addr functionality
-        $display("Checking address skipping...");
-        repeat (200) begin
+        // Test normal operation
+        $display("Testing normal operation...");
+        repeat (130) begin
             #10;
-            $display("addr: %d, indicator: %d, done: %d", addr, indicator, done);
+            $display("addr_ref: %d, indicator_ref: %d, indicator_user: %d, done: %d", addr_ref, indicator_ref, indicator_user, done);
         end
 
+        // Test with user address
+        $display("Testing with user address 2...");
+        addr_user = 7'd2;
+        #10;
+        $display("indicator_user: %d", indicator_user);
+
+        // Test done signal
+        $display("Testing done signal...");
+        while (!done) begin
+            #10;
+        end
+        $display("Simulation done.");
+
         // End the simulation
-        $stop;
+        $finish();
     end
 
 endmodule

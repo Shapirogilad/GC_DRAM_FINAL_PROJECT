@@ -26,7 +26,14 @@ module DRAM_128_64 (
             rd <= 64'bx;
     end
 
-    always_ff @(posedge clk) begin 
+    always_ff @(posedge clk ) begin // for refresh use
+        if (we) begin
+            mem[waddr] <= in;
+            counter[waddr] <= CYCLES;
+        end
+    end
+
+    always_ff @(negedge clk ) begin // for users use
         if (we) begin
             mem[waddr] <= in;
             counter[waddr] <= CYCLES;
