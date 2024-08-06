@@ -27,7 +27,8 @@ module tb_MEM_WRAPPER;
   reg ref_en_current;
   reg start_SR;
   reg [6:0] sr_addr_old;
-  reg sr_indicator_old;
+  reg sr_ref_indicator_old;
+  reg sr_u_indicator_old;
   reg u_re_old;
   reg [6:0] u_read_addr;
   reg [6:0] u_write_addr;
@@ -36,6 +37,7 @@ module tb_MEM_WRAPPER;
   // Outputs
   wire [6:0] sr_addr_current_out;
   wire sr_ref_indicator_current_out;
+  wire sr_u_indicator_current_out;
   wire ref_done;
   wire [63:0] rd;
 
@@ -51,13 +53,15 @@ module tb_MEM_WRAPPER;
     .ref_en_current(ref_en_current),
     .start_SR(start_SR),
     .sr_addr_old(sr_addr_old),
-    .sr_indicator_old(sr_indicator_old),
+    .sr_ref_indicator_old(sr_ref_indicator_old),
+    .sr_u_indicator_old(sr_u_indicator_old),
     .u_re_old(u_re_old),
     .u_read_addr(u_read_addr),
     .u_write_addr(u_write_addr),
     .u_we_old(u_we_old),
     .sr_addr_current_out(sr_addr_current_out),
     .sr_ref_indicator_current_out(sr_ref_indicator_current_out),
+    .sr_u_indicator_out(sr_u_indicator_current_out),
     .ref_done(ref_done),
     .rd(rd)
   );
@@ -84,7 +88,7 @@ logic [63:0] exp;
             ref_en_current = 0; // from controller ('1' as long as refresh occuring)
             start_SR = 0; // from controller ('1' for one cycle)
             sr_addr_old = 0; // from prev memory
-            sr_indicator_old = 0; // from prev memory
+            sr_ref_indicator_old = 0; // from prev memory
             u_re_old = 0; // from controller
             u_read_addr = 0; // from controller
             u_write_addr = 0; // from controller
@@ -118,7 +122,10 @@ logic [63:0] exp;
             $write("%c[1;34m",27);
             $display("USER_NOP_REF_ACTIVE");
             $write("%c[0m",27);
+            start_SR = 1;
             ref_en_old = 1;
+            #10;
+            start_SR = 0;
             for(int i=0;i<128;i++) begin
                 ref_data_in = i+1;
                 sr_addr_old = i;
@@ -143,7 +150,10 @@ logic [63:0] exp;
             $write("%c[1;34m",27);
             $display("USER_WRITE_REF_ACTIVE");
             $write("%c[0m",27);
+            start_SR = 1;
             ref_en_old = 1;
+            #10;
+            start_SR = 0;
             u_we_current = 1;
             for(int i=0;i<128;i++) begin
                 ref_data_in = i+1;
@@ -155,9 +165,9 @@ logic [63:0] exp;
             end
             
             ref_en_old = 0;
-            u_re_current = 1;
             u_we_current = 0;
-
+            #10
+            u_re_current = 1;
             for(int i=0;i<128;i++) begin
                 u_read_addr = i;
                 #20;
@@ -176,9 +186,9 @@ logic [63:0] exp;
 
     RESET_SIGNALS;
 
-    USER_WRITE_READ_NO_REF;
+    // USER_WRITE_READ_NO_REF;
     
-    USER_NOP_REF_ACTIVE;
+    // USER_NOP_REF_ACTIVE;
 
     USER_WRITE_REF_ACTIVE;
 

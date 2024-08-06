@@ -10,6 +10,7 @@ module DRAM_128_64 (
     localparam CYCLES = 4999; //The DRT FAIL is 5000 cycles, because of the sequence of the code
     reg [63:0]mem[0:127];
     reg [12:0]counter[0:127];
+    reg debug;
 
     initial begin
         for (int i = 0; i < 128; i = i + 1) begin
@@ -20,8 +21,10 @@ module DRAM_128_64 (
     always_ff @(posedge clk) begin 
         if (re == we && raddr == waddr)
             rd <= 64'bx;
-        else if (re)
+        else if (re == 1) begin
             rd <= mem[raddr];
+            debug <= re;
+        end
         else
             rd <= 64'bx;
     end

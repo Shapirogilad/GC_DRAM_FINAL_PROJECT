@@ -55,9 +55,13 @@ wire [6:0] sr_addr0;
 wire [6:0] sr_addr1;
 wire [6:0] sr_addr2;
 
-wire sr_indicator0;
-wire sr_indicator1;
-wire sr_indicator2;
+wire sr_ref_indicator0;
+wire sr_ref_indicator1;
+wire sr_ref_indicator2;
+
+wire sr_u_indicator0;
+wire sr_u_indicator1;
+wire sr_u_indicator2;
 
 // Instantiate the Unit Under Test (UUT)
 MEM_WRAPPER mw0 ( // old mem - 2
@@ -71,13 +75,15 @@ MEM_WRAPPER mw0 ( // old mem - 2
     .ref_en_current(ref_en0),
     .start_SR(start_SR0),
     .sr_addr_old(sr_addr2),
-    .sr_indicator_old(sr_indicator2),
+    .sr_ref_indicator_old(sr_ref_indicator2),
+    .sr_u_indicator_old(sr_u_indicator2),
     .u_re_old(u_re2),
     .u_read_addr(u_read_addr),
     .u_write_addr(u_write_addr),
     .u_we_old(u_we2),
     .sr_addr_current_out(sr_addr0),
-    .sr_ref_indicator_current_out(sr_indicator0),
+    .sr_ref_indicator_current_out(sr_ref_indicator0),
+    .sr_u_indicator_out(sr_u_indicator0),
     .ref_done(ref_done0),
     .rd(rd0)
 );
@@ -93,13 +99,15 @@ MEM_WRAPPER mw1 ( // old mem - 0
     .ref_en_current(ref_en1),
     .start_SR(start_SR1),
     .sr_addr_old(sr_addr0),
-    .sr_indicator_old(sr_indicator0),
+    .sr_ref_indicator_old(sr_ref_indicator0),
+    .sr_u_indicator_old(sr_u_indicator0),
     .u_re_old(u_re0),
     .u_read_addr(u_read_addr),
     .u_write_addr(u_write_addr),
     .u_we_old(u_we0),
     .sr_addr_current_out(sr_addr1),
-    .sr_ref_indicator_current_out(sr_indicator1),
+    .sr_ref_indicator_current_out(sr_ref_indicator1),
+    .sr_u_indicator_out(sr_u_indicator1),
     .ref_done(ref_done1),
     .rd(rd1)
 );
@@ -115,13 +123,15 @@ MEM_WRAPPER mw2 ( // old mem - 1
     .ref_en_current(ref_en2),
     .start_SR(start_SR2),
     .sr_addr_old(sr_addr1),
-    .sr_indicator_old(sr_indicator1),
+    .sr_ref_indicator_old(sr_ref_indicator1),
+    .sr_u_indicator_old(sr_u_indicator1),
     .u_re_old(u_re1),
     .u_read_addr(u_read_addr),
     .u_write_addr(u_write_addr),
     .u_we_old(u_we1),
     .sr_addr_current_out(sr_addr2),
-    .sr_ref_indicator_current_out(sr_indicator2),
+    .sr_ref_indicator_current_out(sr_ref_indicator2),
+    .sr_u_indicator_out(sr_u_indicator2),
     .ref_done(ref_done2),
     .rd(rd2)
 );
@@ -240,14 +250,15 @@ logic [63:0] exp2;
             u_re0 = 1;
             for(int i=0;i<128;i++) begin
                 u_read_addr = i;
-                #10; // should be #10
+                #20; // should be #10
                 exp0 = 900+i;
-                Compare_values("Compare USER_NOP_REF_ACTIVE", exp0, rd0, 129+i);
+                Compare_values("Compare USER_NOP_REF_ACTIVE", exp0, rd0,i+1);
             end
             #10;
+            u_re0 = 0;
   
         end
-    endtask 
+    endtask
 
 
     task automatic USER_WRITE_REF_ACTIVE; // imitating COI
@@ -269,28 +280,80 @@ logic [63:0] exp2;
 
             repeat(79) @(posedge clk);
             ref_en0 = 0;
+            u_re1 =1;
+            u_read_addr = 100;
+            exp1 = 2600;
+            #30;
+            u_re1 = 0;
+            Compare_values("Compare USER_WRITE_REF_ACTIVE", exp1, rd1, 1);
+
+
+
             
         end
     endtask
 
-    task automatic USER_READ_REF_ACTIVE; // imitating COI
+    task automatic USER_READ_REF_ACTIVE_ADDR_REF; // reading an address that has been refreshed
         begin
             $write("%c[1;34m",27);
-            $display("USER_WRITE_REF_ACTIVE");
+            $display("USER_READ_REF_ACTIVE_ADDR_REF");
             $write("%c[0m",27);
             ref_en0 = 1;
             start_SR0 = 1;
             #10;
             start_SR0 = 0;
-            repeat(50) @(posedge clk);
-            u_data_in = 2600;
-            u_we0 = 1; // orignally u_we0=1, but the memory wraper made shift to mem1
-            u_write_addr = 100;
+            repeat(49) @(posedge clk);
+            #9;
+            u_read_addr = 20;
+            #1;
+            u_re0 = 1; // orignally u_re0=1, but the memory wraper made shift to mem1
             #10;
-            u_we0 = 0;
+            u_re0 = 0;
 
             repeat(79) @(posedge clk);
             ref_en0 = 0;
+            u_re1 =1;
+            u_read_addr = 20;
+            exp1 = 920;
+            #30;
+            u_re1 =0;
+            Compare_values("Compare USER_READ_REF_ACTIVE_ADDR_REF", exp1, rd1, 1);
+            
+        end
+    endtask
+
+    task automatic USER_READ_REF_ACTIVE_ADDR_NO_REF; // reading an address that has not been refreshed
+        begin
+            $write("%c[1;34m",27);
+            $display("USER_READ_REF_ACTIVE_ADDR_NO_REF");
+            $write("%c[0m",27);
+            u_we0 = 1;
+            u_write_addr = 120;
+            u_data_in = 5;
+            #10;
+            u_we0 = 0;
+            #10;
+
+            ref_en0 = 1;
+            start_SR0 = 1;
+            #10;
+            start_SR0 = 0;
+            repeat(49) @(posedge clk);
+            #9;
+            u_read_addr = 120;
+            #1;
+            u_re0 = 1; // orignally u_re0=1, but the memory wraper made shift to mem1
+            #10;
+            u_re0 = 0;
+
+            repeat(80) @(posedge clk);
+            ref_en0 = 0;
+            // u_re1 =1;
+            // u_read_addr = 120;
+            // exp1 = 5;
+            // #30;
+            // u_re1 =0;
+            // Compare_values("Compare USER_READ_REF_ACTIVE_ADDR_NO_REF", exp1, rd1, 1);
             
         end
     endtask
@@ -307,9 +370,11 @@ logic [63:0] exp2;
     
     //USER_NOP_REF_ACTIVE;
 
-    USER_WRITE_REF_ACTIVE;
+    //USER_WRITE_REF_ACTIVE;
 
-    //USER_READ_REF_ACTIVE;
+    //USER_READ_REF_ACTIVE_ADDR_REF;
+
+    USER_READ_REF_ACTIVE_ADDR_NO_REF;
 
 
 
