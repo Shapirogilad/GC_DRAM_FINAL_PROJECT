@@ -15,6 +15,7 @@ module MEM_WRAPPER (
     input wire [6:0] u_read_addr,
     input wire [6:0] u_write_addr,
     input wire u_we_old,
+    output wire offs_ref_re,
     output wire [6:0] sr_addr_current_out,
     output wire sr_ref_indicator_current_out,
     output wire sr_u_indicator_out,
@@ -24,9 +25,9 @@ module MEM_WRAPPER (
 
     wire [63:0] data_in, data_out;
     wire we_mem, mux_re_out;
-    reg re_mem, or_write_en, and_sel_write_addr, or_read_addr, and_ref_write_en ;
+    reg re_mem, or_write_en, and_sel_write_addr, or_read_addr, and_ref_write_en, or_ref_read_en, or_ref_write_en, and_ref_write_en_port_1;
     wire [6:0] read_addr_mem, write_addr_mem, write_addr_mux_two_out;
-    wire ref_write_en_ff, ref_en_old_ff;
+    wire ref_write_en_ff, and_ref_write_en_port_1_ff;
     wire [6:0] sr_addr_old_ff;
 
     //sr wires
@@ -43,10 +44,10 @@ module MEM_WRAPPER (
     );
 
     DFF #(.BITS(1)) ff_we_ref_en_old (  // delay ref_en_old in 1 cycle
-        .in(ref_en_old),
+        .in(and_ref_write_en_port_1),
         .clk(clk),
         .rst(rst),
-        .out(ref_en_old_ff)
+        .out(and_ref_write_en_port_1_ff)
     );
 
     DFF #(.BITS(1)) ff_we (  // delay and_ref_write_en in 1 cycle
@@ -58,14 +59,14 @@ module MEM_WRAPPER (
 
     MUX_2_1 #(.BITS(1)) mux_we  (
         .a(or_write_en),
-        .b(ref_write_en_ff),
+        .b(or_ref_write_en),
         .sel(clk),
         .out(we_mem)
     );
 
     MUX_2_1 #(.BITS(1)) mux_re  (
         .a(u_re_current),
-        .b(~sr_ref_indicator_current), // to be created in sr
+        .b(or_ref_read_en), // to be created in sr
         .sel(ref_en_current),
         .out(mux_re_out)
     );
@@ -122,27 +123,22 @@ module MEM_WRAPPER (
     .done(ref_done)
     );
 
-    //assign and_ref_write_en = ref_en_old & (~sr_ref_indicator_old);
-
-    //assign re_mem = mux_re_out | (ref_en_old & sr_u_indicator_old & u_re_old);
-
-    //assign or_write_en = (u_we_current | (ref_en_old & u_we_old) | (ref_en_old_ff & u_re_old & ~sr_u_indicator_old));
-
-    //assign or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); 
-
-    //assign and_sel_write_addr = ~u_we_current & ~u_we_old & u_re_old;
-
     //outputs
     assign sr_addr_current_out = sr_addr_current;
     assign sr_ref_indicator_current_out = sr_ref_indicator_current;
     assign sr_u_indicator_out = sr_u_indicator;
+    assign offs_ref_re = ref_en_old & sr_u_indicator_old & u_re_old;
 
-    always_comb begin
+    always_comb begin       
         re_mem = mux_re_out | (ref_en_old & sr_u_indicator_old & u_re_old);
         or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current);
-        or_write_en = (u_we_current | (ref_en_old & u_we_old) | (ref_en_old_ff & u_re_old & ~sr_u_indicator_old));
+        or_write_en = (u_we_current | (ref_en_old & u_we_old));
         and_sel_write_addr = ~u_we_current & ~u_we_old & u_re_old;
         and_ref_write_en = ref_en_old & (~sr_ref_indicator_old);
+
+        or_ref_read_en = ~sr_ref_indicator_current | (u_re_current & (~sr_u_indicator));
+        or_ref_write_en = and_ref_write_en_port_1_ff | ref_write_en_ff;
+        and_ref_write_en_port_1 = ref_en_old & u_re_old & ~sr_u_indicator_old;
     end
 
 endmodule

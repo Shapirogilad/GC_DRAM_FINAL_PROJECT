@@ -13,28 +13,25 @@ module SR (
 );
     reg sr [0:127];
     reg next_indicator_ref;
-    reg [6:0] next_addr_ref;
+    reg [6:0] next_addr_ref, temp;
     wire next_done;
-    reg [6:0] debug;
+    reg flag;
 
     always_ff @(posedge clk or posedge start or posedge rst) begin
         if (rst) begin
             sr <= {(128){0}};
             done <= 1;
             addr_ref <= 0;
-            //indicator_ref <= 0;
             indicator_user <= 0;
         end
         else if (start) begin
             sr <= {(128){0}};
             done <= 0;
             addr_ref <= 0;
-            //indicator_ref <= 0;
             indicator_user <= 0;
         end
         else if (~done) begin
             addr_ref <= next_addr_ref;
-            //indicator_ref <= next_indicator_ref;
             sr[addr_ref] <= 1'b1;
             indicator_user <= sr[read_addr_user];
             if(user_write_enable) begin
@@ -43,31 +40,29 @@ module SR (
             if(user_read_enable && ~sr[read_addr_user]) begin 
                 sr[read_addr_user] <= 1'b1;
             end
-            // else begin
-            //     addr_ref <= next_addr_ref;
-            //     indicator_ref <= next_indicator_ref;
-            //     sr[addr_ref] <= 1'b1;
-            // end
-            
             done <= next_done;
         end
     end
 
-    //assign next_addr_ref = (start || rst) ? 1 : (addr_ref+1);
-    //assign next_indicator_ref = (start || rst) ? 0 : sr[next_addr_ref];
     assign next_done = rst ? 1 : (start ? 0 : ((addr_ref == 127) ? 1 : done)); //Not Suspicius
 
     always_comb begin
         if(start || rst) begin
             next_addr_ref = 1'b1;
             indicator_ref = 0;
+            flag = 0;
+            temp = 0;
         end
         else if(user_read_enable && ~sr[read_addr_user]) begin
-            next_addr_ref = addr_ref;
+            //next_addr_ref = addr_ref;
+            temp = addr_ref;
+            next_addr_ref = read_addr_user;
+            flag =1;
         end
         else begin
-            next_addr_ref = addr_ref+1;
+            next_addr_ref = flag ? (temp+1) : addr_ref+1;
             indicator_ref = sr[addr_ref];
+            flag = 0;
         end
 
     end

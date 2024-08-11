@@ -17,172 +17,183 @@ module TB();
   endfunction
 
     // Inputs and outputs for the testbench
-    logic we;
-    logic re;
-    logic clk;
-    logic busy;
-    logic rst;
-    logic disable_ref;
-    logic [9:0] waddr;
-    logic [9:0] raddr;
-    logic [63:0] in;
-    logic [63:0] rd;
+    reg clk;
+    reg rst;
+    reg we;
+    reg re;
+    reg [9:0] waddr;
+    reg [9:0] raddr;
+    reg [63:0] data_in;
+    wire [63:0] rd;
 
     // Instance of DUT (Design Under Test)
     TOP DUT(
-        .we(we),
-        .re(re),
         .clk(clk),
         .rst(rst),
-        .disable_ref(disable_ref),
+        .we(we),
+        .re(re),
         .waddr(waddr),
         .raddr(raddr),
-        .in(in),
-        .busy(busy),
+        .data_in(data_in),
         .rd(rd)
     );
+
     // exp behavior
     logic [63:0] exp ;
-    logic flag ;
-    
-    // Task to perform regular operations
-    task automatic REGULAR; //check initial condition rd
+
+
+    task automatic RESET_SIGNALS;
         begin
             $write("%c[1;34m",27);
-            $display("Regular");
+            $display("RESET_SIGNALS");
             $write("%c[0m",27);
-            flag  = 1'b0;
-            disable_ref = 1'b0;
-            rst = 1'b1;
-            @(posedge clk);
-            rst = 1'b0;
-            for (int i = 1; i < 33; i++) begin
-                in = $urandom_range(0, {16{4'hF}});
-                waddr = $urandom_range(0, {10{1'b1}});
-                we = $random % 2;
-                @(posedge clk);
-                exp = flag ? (re ? in : 64'bx) : 64'bz;
-                if(we) begin
-                    we = 1'b0;
-                    re = 1'b1;
-                    flag = 1'b1;
-                    raddr = waddr;
+            rst = 0;
+            data_in = 0;
+            waddr = 0;
+            raddr = 0;
+            we = 0;
+            re = 0;
+            #10;
+            rst = 1; // from controller
+            #10;
+            rst = 0;
+            #10;
+        end
+    endtask
+
+    task automatic FILL_ALL_MEM;
+        begin
+            $write("%c[1;34m",27);
+            $display("FILL_ALL_MEM");
+            $write("%c[0m",27);
+            we = 1;
+            for(int i=1;i<8;i++) begin
+                for(int j=0;j<128;j++) begin
+                    data_in = j + 200*i;
+                    waddr = {i[2:0],j[6:0]};
+                    #10;
                 end
-                @(posedge clk);
-                exp = flag ? (re ? in : 64'bx) : 64'bz;
-                @(posedge clk);
-                Compare_values("Compare Regular", exp , rd, i);
-                re = 1'b0; 
             end
+            we = 0;
+            #30; 
         end
-    endtask 
-
-    // Task to simulate a read without a corresponding write
-    task automatic DRT_FAIL;
-        input integer CYCLES;
-        begin
-            $write("%c[1;34m",27);
-            $display("DRT_FAIL");
-            $write("%c[0m",27);
-            disable_ref = 1'b0;
-            rst = 1'b1;
-            @(posedge clk);
-            rst = 1'b0;
-            in = $urandom_range(0, {16{4'hF}});
-            waddr = $urandom_range(0, {10{1'b1}});
-            we = 1'b1;
-            @(posedge clk);
-            we = 1'b0;
-            re = 1'b1;
-            raddr = waddr;
-            @(posedge clk);
-            exp = in;
-            repeat(CYCLES) @(posedge clk);
-            Compare_values("Compare DRT FAIL", exp , rd, 1);
-        end
-    endtask 
+    endtask
     
-    task automatic WE_RE_COLLISION;
+    task automatic READ_ALL_MEM;
         begin
             $write("%c[1;34m",27);
-            $display("WE_RE_COLLISION");
+            $display("READ_ALL_MEM");
             $write("%c[0m",27);
-            flag = 1'b0;
-            disable_ref = 1'b0;
-            rst = 1'b1;
-            @(posedge clk);
-            rst = 1'b0;
-            in = $urandom_range(0, {16{4'hF}});
-            waddr = $urandom_range(0, {10{1'b1}});
-            raddr = waddr;
-            @(posedge clk);      
-            we = 1'b1;
-            re = 1'b1;
-            #30;
-            exp = flag ? in : 64'bx ; 
-            Compare_values("Compare WE_RE_COLLISION", exp, rd, 1);
-            we = 1'b0;
-            flag = 1'b1;
-            #30;
-            exp = flag ? in : 64'bx ; 
-            Compare_values("Compare WE_RE_COLLISION", exp, rd, 2);
+            re = 1;
+            for(int i=1;i<8;i++) begin
+                for(int j=0;j<128;j++) begin
+                    raddr = {i[2:0],j[6:0]};
+                    #10; // for exp to work change to 20
+                    exp = j + 200*i;
+                    Compare_values("Compare READ_ALL_MEM",exp,rd,1);
+                end
+            end
+            #10;
+            re = 0;
+            #30; 
         end
-    endtask 
+    endtask
 
-    task automatic READ_DATA_NOT_EXIST;
+    task automatic USER_NOP_REF_ACTIVE;
         begin
             $write("%c[1;34m",27);
-            $display("READ_DATA_NOT_EXIST");
+            $display("USER_NOP_REF_ACTIVE");
             $write("%c[0m",27);
-            disable_ref = 1'b0;
-            rst = 1'b1;
-            @(posedge clk);
-            rst = 1'b0;
-            raddr = $urandom_range(0, {10{1'b1}});
-            re = 1'b1;
-            #60;
-            exp = 64'bx;
-            Compare_values("Compare READ_DATA_NOT_EXIST", exp, rd, 1);
-        end
-    endtask 
+            repeat(6000) @(posedge clk);
 
-        task automatic DISABLE_REFRESH;
-            input integer CYCLES;
+        end
+    endtask
+
+    task automatic USER_READ_REF_NOP_OFFSET; // this task must be used with task USER_NOP_REF_ACTIVE
         begin
             $write("%c[1;34m",27);
-            $display("DISABLE_REFRESH");
+            $display("USER_READ_REF_NOP_OFFSET");
             $write("%c[0m",27);
-            disable_ref = 1'b1;
-            rst = 1'b1;
-            @(posedge clk);
-            rst = 1'b0;
-            in = $urandom_range(0, {16{4'hF}});
-            waddr = $urandom_range(0, {10{1'b1}});
-            we = 1'b1;
-            @(posedge clk);
-            we = 1'b0;
-            re = 1'b1;
-            raddr = waddr;
-            @(posedge clk);
-            repeat(CYCLES) @(posedge clk);
-            exp = 64'bx;
-            Compare_values("Compare DISABLE_REFRESH", exp , rd, 1);
+            //raddr =  899; // addr 3 in mem7 after ref should be addr 3 in mem0 exp in rd 1403
+            #9;
+            raddr = 387; // addr 3 in mem3 after ref should be addr 3 in mem4 exp in rd 603
+            re = 1;
+            #11;
+            re = 0;
+            #20;
         end
-    endtask 
+    endtask
 
-    always #5 clk = !clk;
+    task automatic USER_WRITE_REF_ACTIVE;
+        /*
+            now refreshing mem5 at addr ~~ 32 (seconed refresh cycle so ref mem6 to mem7)
+        */
+        begin
+            $write("%c[1;34m",27);
+            $display("USER_WRITE_REF_ACTIVE");
+            $write("%c[0m",27);
+            repeat(7500) @(posedge clk); 
+            data_in = 1;
+            waddr = 740; // addr 100 in mem5
+            we = 1;
+            #10;
+            we = 0;
+            #10;  
+            repeat(100) @(posedge clk);
+        end
+    endtask
+
+    task automatic USER_READ_REF_ACTIVE_ADDR_REF; // reading an address that has been refreshed, this task must be used with task USER_WRITE_REF_ACTIVE
+        begin
+            $write("%c[1;34m",27);
+            $display("USER_READ_REF_ACTIVE_ADDR_REF");
+            $write("%c[0m",27);
+            raddr = 740; // addr 100 in mem5
+            #9
+            re = 1;
+            #11;
+            re = 0;
+            #100;
+            
+        end
+    endtask
+
+    task automatic USER_READ_REF_ACTIVE_ADDR_NO_REF; // reading an address that has not been refreshed
+        begin
+            $write("%c[1;34m",27);
+            $display("USER_READ_REF_ACTIVE_ADDR_NO_REF");
+            $write("%c[0m",27);
+            repeat(7500) @(posedge clk);
+            raddr = 760; // addr 120 in mem5
+            #9;
+            re = 1;
+            #11;
+            re = 0;
+            repeat(110) @(posedge clk);
+            
+        end
+    endtask
+
+
+
+    always #5 clk = ~clk;
 
     initial begin
         clk = 1; 
-        REGULAR;
+        
+        RESET_SIGNALS;
 
-        DRT_FAIL(6000); 
+        FILL_ALL_MEM;
 
-        WE_RE_COLLISION;
+        //READ_ALL_MEM;
 
-        READ_DATA_NOT_EXIST;
+        // USER_NOP_REF_ACTIVE;
+        // USER_READ_REF_NOP_OFFSET;
 
-        DISABLE_REFRESH(6000);
+        // USER_WRITE_REF_ACTIVE;
+        // USER_READ_REF_ACTIVE_ADDR_REF;
+
+        USER_READ_REF_ACTIVE_ADDR_NO_REF; // still need to be fixed (rd)
 
         $finish();
     end

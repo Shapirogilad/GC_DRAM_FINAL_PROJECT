@@ -190,6 +190,24 @@ logic [63:0] exp2;
         end
     endtask
 
+    task automatic USER_READ_REF_NOP;
+        begin
+            $write("%c[1;34m",27);
+            $display("USER_READ_REF_NOP");
+            $write("%c[0m",27);
+            u_re0 = 1;
+            for(int i = 127; i >= 0; i--) begin
+                u_read_addr = i;
+                #20;
+                exp0 = 900 + i;
+                Compare_values("Compare USER_READ_REF_NOP",exp0,rd0,127-i);
+            end
+            #10;
+            u_re0 = 0;
+
+        end
+    endtask
+
     task automatic USER_NOP_REF_ACTIVE; // imitating COI
         begin
             $write("%c[1;34m",27);
@@ -259,7 +277,6 @@ logic [63:0] exp2;
   
         end
     endtask
-
 
     task automatic USER_WRITE_REF_ACTIVE; // imitating COI
         begin
@@ -332,6 +349,7 @@ logic [63:0] exp2;
             u_data_in = 5;
             #10;
             u_we0 = 0;
+            u_data_in = 900000000;
             #10;
 
             ref_en0 = 1;
@@ -348,16 +366,17 @@ logic [63:0] exp2;
 
             repeat(80) @(posedge clk);
             ref_en0 = 0;
-            // u_re1 =1;
-            // u_read_addr = 120;
-            // exp1 = 5;
-            // #30;
-            // u_re1 =0;
-            // Compare_values("Compare USER_READ_REF_ACTIVE_ADDR_NO_REF", exp1, rd1, 1);
+            u_re1 =1;
+            u_read_addr = 120;
+            exp1 = 5;
+            #30;
+            u_re1 =0;
+            Compare_values("Compare USER_READ_REF_ACTIVE_ADDR_NO_REF", exp1, rd1, 1);
             
         end
     endtask
 
+    
     
 
   initial begin
@@ -368,17 +387,16 @@ logic [63:0] exp2;
 
     FILL_MEM0;
     
-    //USER_NOP_REF_ACTIVE;
+    USER_READ_REF_NOP;
 
-    //USER_WRITE_REF_ACTIVE;
+    USER_NOP_REF_ACTIVE;
 
-    //USER_READ_REF_ACTIVE_ADDR_REF;
+    USER_WRITE_REF_ACTIVE;
 
-    USER_READ_REF_ACTIVE_ADDR_NO_REF;
+    USER_READ_REF_ACTIVE_ADDR_REF;
 
+    //USER_READ_REF_ACTIVE_ADDR_NO_REF;
 
-
-    
     $finish;
   end
 

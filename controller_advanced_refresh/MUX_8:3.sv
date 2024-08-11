@@ -1,5 +1,5 @@
 module MUX_8_3 (
-    input wire [7:0][63:0] in,
+    input wire [63:0] in [0:7],
     input wire [2:0] sel,
     output logic [63:0] out
 );
