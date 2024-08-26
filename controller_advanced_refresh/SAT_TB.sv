@@ -1,4 +1,4 @@
-module SR_CTRL_TB;
+module SAT_TB;
 
   // Inputs
   reg rst;
@@ -12,7 +12,7 @@ module SR_CTRL_TB;
   wire [2:0] raddr_o;
 
   // Instantiate the Unit Under Test (UUT)
-  SR_CTRL uut (
+  SAT uut (
     .rst(rst), 
     .waddr(waddr), 
     .raddr(raddr), 

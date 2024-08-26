@@ -1,4 +1,4 @@
-module SR_CTRL (
+module SAT ( // Shift Addr Table
     input wire rst,
     input wire clk,
     input wire [2:0] waddr,
@@ -10,30 +10,32 @@ module SR_CTRL (
     
 );
     reg [2:0] sr [0:7];
-    reg [2:0] temp;
+    reg [2:0] swap_index;
 
     always_ff @( posedge clk ) begin 
         if (rst) begin
-             sr <= '{7, 1, 2, 3, 4, 5, 6, 0};
+             sr <= '{1, 0, 2, 3, 4, 5, 6, 7};
+             swap_index <= 1;
         end
         else if (any_ref_done) begin
-            sr[ref_mem_addr] <= sr[0];
-            sr[0] <= sr[ref_mem_addr];
+            sr[swap_index] <= sr[0];
+            sr[0] <= sr[swap_index];
+            if (swap_index == 1) begin
+                swap_index <= 7;
+            end
+            else begin
+                swap_index <= swap_index - 1;
+            end
+            
         end
         
     end
 
     always_comb begin
         if(rst) begin
-           //sr = '{7, 1, 2, 3, 4, 5, 6, 0}; // because when rst it does one swap
            waddr_o = 0;
            raddr_o = 0; 
         end
-        // else if(any_ref_done) begin
-        //     temp = sr[ref_mem_addr];
-        //     sr[ref_mem_addr] = sr[0];
-        //     sr[0] = temp;
-        // end
         waddr_o = sr[waddr];
         raddr_o = sr[raddr];
         

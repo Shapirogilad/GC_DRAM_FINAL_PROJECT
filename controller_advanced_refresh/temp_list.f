@@ -1,7 +1,7 @@
 +incdir+../
 /data/home/harhen/Desktop/GC_DRAM_FINAL_PROJECT/controller_advanced_refresh/TB.sv
 ../TOP.sv
-../SR_CTRL.sv
+../SAT.sv
 ../REF_MEM_COUNTER.sv
 ../CYCLES_COUNTER.sv
 ../MUX_8:3.sv

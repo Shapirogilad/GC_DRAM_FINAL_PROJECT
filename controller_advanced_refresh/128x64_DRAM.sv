@@ -5,42 +5,39 @@ module DRAM_128_64 (
     input wire [63:0] in,
     input wire [6:0] raddr,
     input wire [6:0] waddr,
-    output logic [63:0] rd
+    output reg [63:0] rd
 );
     localparam CYCLES = 4999; //The DRT FAIL is 5000 cycles, because of the sequence of the code
     reg [63:0]mem[0:127];
     reg [12:0]counter[0:127];
+    reg [63:0]not_delayed_rd;
+    initial counter = '{default: 13'b0};
+    reg [4:0] debug;
 
-    initial begin
-        for (int i = 0; i < 128; i = i + 1) begin
-            counter[i] = 0;
+    always_comb begin 
+        if (re == we && raddr == waddr) begin
+            not_delayed_rd = 64'bx;
+        end
+        else if (re == 1) begin
+           not_delayed_rd = mem[raddr];
+        end
+        else begin
+            not_delayed_rd = 64'bx;
         end 
     end
 
-    always_ff @(posedge clk) begin 
-        if (re == we && raddr == waddr)
-            rd <= 64'bx;
-        else if (re == 1) begin
-            rd <= mem[raddr];
-        end
-        else
-            rd <= 64'bx;
-    end
-
-    always_ff @(posedge clk ) begin // for refresh use
-        if (we) begin
-            mem[waddr] <= in;
-            counter[waddr] <= CYCLES;
+    always @(we or waddr or in) begin
+        //! Check with Roman about adding #4, it gives problems with writing 'x' without we
+        if (we == 1) begin
+            mem[waddr] = in;
+            counter[waddr] = CYCLES;
         end
     end
 
-    always_ff @(negedge clk ) begin // for users use
-        if (we) begin
-            mem[waddr] <= in;
-            counter[waddr] <= CYCLES;
-        end
+    always @(not_delayed_rd) begin
+        #9 rd = not_delayed_rd;
     end
-    
+
     always_ff @(posedge clk) begin
         for (int i = 0; i < 128; i++) begin
             if (counter[i])
