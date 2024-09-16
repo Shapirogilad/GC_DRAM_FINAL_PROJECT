@@ -167,7 +167,7 @@ module TB();
         end
     endtask
 
-    task automatic USER_LONG_TIME_READ_REF_ACTIVE_ADDR_NO_REF; 
+    task automatic USER_LONG_TIME_READ_REF_ACTIVE_ADDR_NO_REF(input int num_cycles); 
         begin
             $write("%c[1;34m",27);
             $display("USER_READ_REF_ACTIVE_ADDR_NO_REF");
@@ -175,13 +175,13 @@ module TB();
             repeat(7500) @(posedge clk);
             re = 1;
             raddr = 760; // addr 120 in mem5
-            repeat (20) @(posedge clk);
+            repeat (num_cycles) @(posedge clk);
             re = 0;
             repeat(110) @(posedge clk);
         end
     endtask
 
-    task automatic USER_LONG_TIME_WRITE_REF_ACTIVE; 
+    task automatic USER_LONG_TIME_WRITE_REF_ACTIVE(input int num_cycles); 
         begin
             $write("%c[1;34m",27);
             $display("USER_LONG_TIME_WRITE_REF_ACTIVE");
@@ -190,7 +190,7 @@ module TB();
             we = 1;
             waddr = 685; // addr 45 in mem5
             data_in = 2;
-            repeat (20) @(posedge clk);
+            repeat (num_cycles) @(posedge clk);
             we = 0;
             repeat(110) @(posedge clk);
         end
@@ -231,6 +231,58 @@ module TB();
             $write("%c[0m",27);
             repeat(65000) @(posedge clk);
 
+        end
+    endtask
+
+    task automatic READ_ALL_MEM1_REFֹֹ_ACTIVE;
+        begin
+            $write("%c[1;34m",27);
+            $display("READ_ALL_MEM1_REFֹֹ_ACTIVE");
+            $write("%c[0m",27);
+            repeat(3920) @(posedge clk);
+            for(int i=0;i<128;i++) begin
+            re = 1;
+            raddr = {3'b001,i[6:0]};
+            @(posedge clk);
+            //exp = i + 1400;
+            end
+            @(posedge clk);
+            re = 0; 
+            repeat(100) @(posedge clk);
+        end
+    endtask
+
+    task automatic WRITE_MEM1_TOP_DOWN_REF_ACTIVE;
+        begin
+            $write("%c[1;34m",27);
+            $display("WRITE_MEM1_TOP_DOWN_REF_ACTIVE");
+            $write("%c[0m",27);
+            repeat(3934) @(posedge clk);
+            for(int i=127;i>=0;i--) begin
+                we = 1;
+                data_in = i;
+                waddr = {3'b001,i[6:0]};
+                @(posedge clk);
+            end
+            we = 0;
+            repeat(100) @(posedge clk); 
+        end
+    endtask
+
+    task automatic WRITE_MEM5_TOP_DOWN_REF_ACTIVE_MEM1;
+        begin
+            $write("%c[1;34m",27);
+            $display("WRITE_MEM5_TOP_DOWN_REF_ACTIVE_MEM1");
+            $write("%c[0m",27);
+            repeat(3934) @(posedge clk);
+            for(int i=127;i>=0;i--) begin
+                we = 1;
+                data_in = i;
+                waddr = {3'b101,i[6:0]};
+                @(posedge clk);
+            end
+            we = 0;
+            repeat(100) @(posedge clk); 
         end
     endtask
 
@@ -301,7 +353,9 @@ module TB();
                            Check mux_rd that we are reading 2 clk cycles from MEM6, and the rest from MEM7.
                            Check rd = 1120 for 20 clk cycles. 
         */
-        //USER_LONG_TIME_READ_REF_ACTIVE_ADDR_NO_REF;
+        //USER_LONG_TIME_READ_REF_ACTIVE_ADDR_NO_REF(20);
+        //USER_LONG_TIME_READ_REF_ACTIVE_ADDR_NO_REF(1000);
+        //USER_LONG_TIME_READ_REF_ACTIVE_ADDR_NO_REF(10000);
 
         /*
             Similar as the task: USER_WRITE_REF_ACTIVE, but here user writes for 20 clk cycles straight.
@@ -309,7 +363,9 @@ module TB();
                            Check that refresh does not get stuck.
                            The value data_in = 2 was written to addr 45 both in MEM6 & MEM7.
         */
-        //USER_LONG_TIME_WRITE_REF_ACTIVE;
+        //USER_LONG_TIME_WRITE_REF_ACTIVE(20);
+        //USER_LONG_TIME_WRITE_REF_ACTIVE(1000);
+        //USER_LONG_TIME_WRITE_REF_ACTIVE(10000);
 
         /*
             Excecuting 1 cycle with no interuption.
@@ -321,6 +377,36 @@ module TB();
                             Check: MEM7[0] = 10, MEM7[60] = 20, MEM7[127] = 30.
         */
         //USER_WRITE_REF_ACTIVE_SAME_ADDR;
+
+        /*
+            Start reading from MEM1[0] before refresh starts.
+            We read from 0 -> 127.
+            Refresh of MEM1 starts in the middle of the read.
+            List to check:
+                           Check that refresh does not get stuck, and starts from the same addr that the reading operation is at.
+                           (also check that the refresh goes back to refresh the initial addresses).
+                           Check rd gives all the values from 200 -> 327 in order.
+        */
+        //READ_ALL_MEM1_REFֹֹ_ACTIVE;
+        /*
+            Start writing from MEM1[127] as refresh starts.
+            We write from 127 -> 0.
+            List to check:
+                           Check that refresh does not get stuck, and starts from addr 0 and going up.
+                           Check that in paralel we write to addr 127 and going down.
+                           At some point they should meet somewhere in the middle.
+                           Check that MEM1 and MEM2 are filled with the values - 0 -> 127.
+        */
+        //WRITE_MEM1_TOP_DOWN_REF_ACTIVE;
+
+        /*
+            Start writing to MEM5 while refreshing MEM1.
+            Notice that MEM5 is refreshed so there is offset to MEM6.
+            List to check:
+                           Check that refresh does not get stuck.
+                           CHeck that the values are written to MEM6.
+        */
+        //WRITE_MEM5_TOP_DOWN_REF_ACTIVE_MEM1;
 
         /*
             JUST WATCH THE BEAUTY !!

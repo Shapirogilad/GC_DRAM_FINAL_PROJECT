@@ -27,7 +27,7 @@ module DRAM_128_64 (
     end
 
     always @(we or waddr or in) begin
-        //! Check with Roman about adding #4, it gives problems with writing 'x' without we
+        #4;
         if (we == 1) begin
             mem[waddr] = in;
             counter[waddr] = CYCLES;

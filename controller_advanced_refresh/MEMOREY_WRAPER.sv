@@ -118,14 +118,16 @@ module MEM_WRAPPER (
     assign sr_addr_current_out = sr_addr_current;
     assign sr_ref_indicator_current_out = sr_ref_indicator_current;
     assign sr_u_indicator_out = sr_u_indicator;
-    // assign offs_ref_re = ref_en_old & sr_u_indicator_old & u_re_old;
-    assign offs_ref_re = ref_en_current & u_re_current & (sr_u_indicator & ~(&(sr_addr_current ^~ u_read_addr))); //ugly change
+
+    //assign offs_ref_re = ref_en_current & u_re_current & (sr_u_indicator & ~(&(sr_addr_current ^~ u_read_addr))); //ugly change
+    assign offs_ref_re = ref_en_current & u_re_current & sr_u_indicator;//nice change
 
     always_comb begin    
         and_re = (ref_en_old & sr_u_indicator_old & u_re_old);
         re_mem = mux_re_out | and_re;
         //or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current);
-        or_read_addr = (u_re_old & (sr_u_indicator_old & ~(&(sr_addr_old ^~ u_read_addr)))) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); //ugly change
+        //or_read_addr = (u_re_old & (sr_u_indicator_old & ~(&(sr_addr_old ^~ u_read_addr)))) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); //ugly change
+        or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); //nice change
         or_write_en = (u_we_current | (ref_en_old & u_we_old));
 
         //or_ref_read_en = ~sr_ref_indicator_current | (u_re_current & (~sr_u_indicator));
