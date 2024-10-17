@@ -12,31 +12,29 @@ module DRAM_128_64 (
     reg [12:0]counter[0:127];
     reg [63:0]not_delayed_rd;
     initial counter = '{default: 13'b0};
-    reg [4:0] debug;
 
     always_comb begin 
         if (re == we && raddr == waddr) begin
-            not_delayed_rd = 64'bx;
+            rd = 64'bx;
         end
         else if (re == 1) begin
-           not_delayed_rd = mem[raddr];
+           rd = mem[raddr];
         end
         else begin
-            not_delayed_rd = 64'bx;
+            rd = 64'bx;
         end 
     end
 
-    always @(we or waddr or in) begin
-        #4;
+    always_comb begin
         if (we == 1) begin
             mem[waddr] = in;
             counter[waddr] = CYCLES;
         end
+        else begin
+            counter[waddr] = counter[waddr];
+        end
     end
 
-    always @(not_delayed_rd) begin
-        #9 rd = not_delayed_rd;
-    end
 
     always_ff @(posedge clk) begin
         for (int i = 0; i < 128; i++) begin

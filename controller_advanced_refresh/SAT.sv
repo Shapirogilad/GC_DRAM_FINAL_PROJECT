@@ -4,7 +4,6 @@ module SAT ( // Shift Addr Table
     input wire [2:0] waddr,
     input wire [2:0] raddr,
     input wire any_ref_done,
-    input wire [2:0] ref_mem_addr,
     output reg [2:0] waddr_o,
     output reg [2:0] raddr_o
     

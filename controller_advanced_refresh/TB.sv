@@ -404,7 +404,7 @@ module TB();
             Notice that MEM5 is refreshed so there is offset to MEM6.
             List to check:
                            Check that refresh does not get stuck.
-                           CHeck that the values are written to MEM6.
+                           Check that the values are written to MEM6.
         */
         //WRITE_MEM5_TOP_DOWN_REF_ACTIVE_MEM1;
 

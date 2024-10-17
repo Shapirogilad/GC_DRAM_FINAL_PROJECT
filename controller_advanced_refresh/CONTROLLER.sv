@@ -113,7 +113,6 @@ module CONTROLLER (
         .waddr(waddr[9:7]),
         .raddr(raddr[9:7]),
         .any_ref_done(any_ref_done),
-        .ref_mem_addr(ref_mem_addr),
         .waddr_o(sel_mux_we),
         .raddr_o(sel_mux_re)
     );
