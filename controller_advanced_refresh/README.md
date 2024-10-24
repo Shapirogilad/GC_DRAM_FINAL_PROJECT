@@ -11,4 +11,4 @@ We implemented the controller using this algorithm described above.
 
 ## The controller's scheme
 
-![Controller and memory array](https://drive.google.com/file/d/1H49NLcrBdEmg0EwKmwBe4RpXTGjuApNr/view "Controller and memory array with refresh algorithm")
+![Controller and memory array](https://drive.google.com/file/d/16RLPw13i_YOaUDNo94ZZ_SNk2zIJmtQI/view "Controller and memory array with refresh algorithm")
