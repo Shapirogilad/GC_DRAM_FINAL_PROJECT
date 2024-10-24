@@ -118,21 +118,14 @@ module MEM_WRAPPER (
     assign sr_addr_current_out = sr_addr_current;
     assign sr_ref_indicator_current_out = sr_ref_indicator_current;
     assign sr_u_indicator_out = sr_u_indicator;
-
-    //assign offs_ref_re = ref_en_current & u_re_current & (sr_u_indicator & ~(&(sr_addr_current ^~ u_read_addr))); //ugly change
-    assign offs_ref_re = ref_en_current & u_re_current & sr_u_indicator;//nice change
+    assign offs_ref_re = ref_en_current & u_re_current & sr_u_indicator;
 
     always_comb begin    
         and_re = (ref_en_old & sr_u_indicator_old & u_re_old);
         re_mem = mux_re_out | and_re;
-        //or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current);
-        //or_read_addr = (u_re_old & (sr_u_indicator_old & ~(&(sr_addr_old ^~ u_read_addr)))) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); //ugly change
-        or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); //nice change
+        or_read_addr = (u_re_old & sr_u_indicator_old) | (u_re_current & ref_en_current & ~sr_u_indicator) | (u_re_current & ~ref_en_current); 
         or_write_en = (u_we_current | (ref_en_old & u_we_old));
-
-        //or_ref_read_en = ~sr_ref_indicator_current | (u_re_current & (~sr_u_indicator));
-        or_ref_read_en = ~sr_ref_indicator_current | (u_re_current & ((~(sr_u_indicator)) || (sr_u_indicator & (&(sr_addr_current ^~ u_read_addr))))); //ugly change
-
+        or_ref_read_en = ~sr_ref_indicator_current | (u_re_current & ((~(sr_u_indicator)) || (sr_u_indicator & (&(sr_addr_current ^~ u_read_addr))))); 
         and_ref_write_en = ref_en_old & (~sr_ref_indicator_old);
         and_ref_write_en_port_1 = ref_en_old & u_re_old & ~sr_u_indicator_old;
         or_ref_write_en = and_ref_write_en_port_1 | and_ref_write_en;
@@ -140,6 +133,5 @@ module MEM_WRAPPER (
         and_ref_write_en_after_or =  or_ref_write_en & u_ref_w_addr_cmp;
     end
 
-    // &(sr_addr_old ^~ u_read_addr) == (sr_addr_old == u_read_addr)
 
 endmodule

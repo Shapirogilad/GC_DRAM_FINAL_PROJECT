@@ -11,7 +11,7 @@ module SR (
     output wire [6:0] addr_ref,
     output reg done
 );
-    reg sr [0:127];
+    reg [127:0] sr;
     reg [6:0] temp_addr, addr_ref_buf;
     wire next_done;
 

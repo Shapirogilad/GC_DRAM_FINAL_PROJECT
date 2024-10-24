@@ -21,13 +21,10 @@ module CONTROLLER (
     wire we, re;
     wire [9:0] waddr, raddr;
     wire [63:0] data_in;
-
     wire [2:0] sel_mux_rd, sel_mux_we, sel_mux_re, ref_mem_addr, sel_mux_rd_ff;
     wire [7:0] ref_done_chopped;
     wire ref_en, ref_cycle_done, any_ref_done, re_ff;
     wire [63:0] rd_lock;
-
-    // ff on user's input
 
     DFF #(.BITS(1)) ff_we (            
         .in(u_we),
@@ -63,7 +60,6 @@ module CONTROLLER (
         .rst(rst),
         .out(data_in)
     );
-
     // controller logic
 
     DECODER_3_8 write_enable_dec (
@@ -104,7 +100,6 @@ module CONTROLLER (
         .sel(re_ff),
         .out(rd)
     );
-
     // Refresh Logic
 
     SAT sat( // Shift Addr Table
@@ -137,7 +132,6 @@ module CONTROLLER (
         .sel(ref_mem_addr),
         .out(ref_en_o)
     );
-
     genvar i;
     generate
         for (i=0; i<8; i++) begin
@@ -157,7 +151,6 @@ module CONTROLLER (
 
         end
     endgenerate
-
     assign in_mem = data_in;
     assign waddr_mem = waddr[6:0];
     assign raddr_mem = raddr[6:0];
